@@ -9,27 +9,22 @@ import {Address} from "openzeppelin-contracts/utils/Address.sol";
 
 /**
  * @title Pizza
- * @dev This contract is a modification of OpenZeppelin's PaymentSplitter.
+ * @dev This contract is a simplifications of OpenZeppelin's PaymentSplitter.
  *      It allows for the release of ERC20 tokens as well as Ether.
  *      Releases are modified to be only callable in a batch, rather than individually.
  */
 contract Pizza is Initializable, Context {
     using SafeERC20 for IERC20;
 
-    event PayeeAdded(address account, uint256 shares);
-    event PaymentReleased(address to, uint256 amount);
-    event ERC20PaymentReleased(IERC20 indexed token, address to, uint256 amount);
     event PaymentReceived(address from, uint256 amount);
+    event Release(uint256 amount);
+    event ERC20Release(IERC20 indexed token, uint256 amount);
 
     uint256 public totalShares;
     uint256 public totalReleased;
-
-    mapping(address => uint256) public shares;
-    mapping(address => uint256) public released;
     address[] public payee;
-
+    mapping(address => uint256) public shares;
     mapping(IERC20 => uint256) public erc20TotalReleased;
-    mapping(IERC20 => mapping(address => uint256)) public erc20Released;
 
     // uint32 public releaseBountyBIPS;
     // uint256 public constant BIPS_PRECISION = 10000;
@@ -60,95 +55,56 @@ contract Pizza is Initializable, Context {
         emit PaymentReceived(_msgSender(), msg.value);
     }
 
-    /**
-     * @dev Getter for the amount of payee's releasable Ether.
-     */
-    function releasable(address account) public view returns (uint256) {
-        uint256 totalReceived = address(this).balance + totalReleased;
-        return _pendingPayment(account, totalReceived, released[account]);
-    }
-
-    /**
-     * @dev Getter for the amount of payee's releasable `token` tokens. `token` should be the address of an
-     * IERC20 contract.
-     */
-    function releasable(IERC20 token, address account) public view returns (uint256) {
-        uint256 totalReceived = token.balanceOf(address(this)) + erc20TotalReleased[token];
-        return _pendingPayment(account, totalReceived, erc20Released[token][account]);
-    }
-
     function release() external {
+        uint256 totalReleasable = address(this).balance;
+        require(totalReleasable > 0, "PaymentSplitter: no payment is due");
+        totalReleased += totalReleasable;
         for (uint256 i = 0; i < payee.length; i++) {
-            _release(payable(payee[i]));
+            _releaseTo(totalReleasable, payee[i]);
         }
+        emit Release(totalReleasable);
     }
 
     function erc20Release(IERC20 token) external {
+        uint256 erc20TotalReleasable = token.balanceOf(address(this));
+        require(erc20TotalReleasable > 0, "PaymentSplitter: no payment is due");
+        erc20TotalReleased[token] += erc20TotalReleasable;
         for (uint256 i = 0; i < payee.length; i++) {
-            _release(token, payable(payee[i]));
+            _erc20ReleaseTo(erc20TotalReleasable, token, payee[i]);
         }
+        emit ERC20Release(token, erc20TotalReleasable);
+    }
+
+    /* //////////////////////////////////////////////////////////////////////// 
+                                      Getters
+    //////////////////////////////////////////////////////////////////////// */
+
+    function numPayees() external view returns (uint256) {
+        return payee.length;
+    }
+
+    function payees() external view returns (address[] memory) {
+        return payee;
     }
 
     /* //////////////////////////////////////////////////////////////////////// 
                                       Private
     //////////////////////////////////////////////////////////////////////// */
 
-    /**
-     * @dev Triggers a transfer to `account` of the amount of Ether they are owed, according to their percentage of the
-     * total shares and their previous withdrawals.
-     */
-    function _release(address payable account) private {
-        require(shares[account] > 0, "PaymentSplitter: account has no shares");
-
-        uint256 payment = releasable(account);
-
-        require(payment != 0, "PaymentSplitter: account is not due payment");
-
-        // _totalReleased is the sum of all values in released.
-        // If "_totalReleased += payment" does not overflow, then "released[account] += payment" cannot overflow.
-        totalReleased += payment;
-        unchecked {
-            released[account] += payment;
-        }
-
-        Address.sendValue(account, payment);
-        emit PaymentReleased(account, payment);
+    function _releaseTo(uint256 totalReleasable, address account) private {
+        uint256 amountToPay = totalReleasable * shares[account] / totalShares;
+        Address.sendValue(payable(account), amountToPay);
     }
 
     /**
-     * @dev Triggers a transfer to `account` of the amount of `token` tokens they are owed, according to their
-     * percentage of the total shares and their previous withdrawals. `token` must be the address of an IERC20
-     * contract.
+     * @dev Releases a specified amount of ERC20 tokens to a specified account.
+     * @param erc20TotalReleasable The amount of ERC20 tokens to release.
+     * @param token The ERC20 token contract.
+     * @param account The account to receive the released tokens.
      */
-    function _release(IERC20 token, address account) private {
-        require(shares[account] > 0, "PaymentSplitter: account has no shares");
-
-        uint256 payment = releasable(token, account);
-
-        require(payment != 0, "PaymentSplitter: account is not due payment");
-
-        // erc20TotalReleased[token] is the sum of all values in erc20Released[token].
-        // If "erc20TotalReleased[token] += payment" does not overflow, then "erc20Released[token][account] += payment"
-        // cannot overflow.
-        erc20TotalReleased[token] += payment;
-        unchecked {
-            erc20Released[token][account] += payment;
-        }
-
-        SafeERC20.safeTransfer(token, account, payment);
-        emit ERC20PaymentReleased(token, account, payment);
-    }
-
-    /**
-     * @dev internal logic for computing the pending payment of an `account` given the token historical balances and
-     * already released amounts.
-     */
-    function _pendingPayment(address account, uint256 totalReceived, uint256 alreadyReleased)
-        private
-        view
-        returns (uint256)
-    {
-        return (totalReceived * shares[account]) / totalShares - alreadyReleased;
+    function _erc20ReleaseTo(uint256 erc20TotalReleasable, IERC20 token, address account) private {
+        uint256 amountToPay = erc20TotalReleasable * shares[account] / totalShares;
+        SafeERC20.safeTransfer(token, payable(account), amountToPay);
     }
 
     /**
@@ -164,6 +120,5 @@ contract Pizza is Initializable, Context {
         payee.push(account);
         shares[account] = _shares;
         totalShares = totalShares + _shares;
-        emit PayeeAdded(account, _shares);
     }
 }
