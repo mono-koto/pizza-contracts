@@ -16,37 +16,29 @@ contract PizzaFactory {
         pizza.initialize(_payees, _shares);
     }
 
-    function createDeterministic(address[] memory _payees, uint256[] memory _shares, bytes32 _salt)
+    function createDeterministic(address[] memory _payees, uint256[] memory _shares, uint256 _nonce)
         external
         returns (IPizza pizza)
     {
-        pizza = IPizza(address(Clones.cloneDeterministic(implementation, _paramHashedSalt(_payees, _shares, _salt))));
+        pizza = IPizza(address(Clones.cloneDeterministic(implementation, _paramHashedSalt(_payees, _shares, _nonce))));
         pizza.initialize(_payees, _shares);
     }
 
-    function predict(address[] memory _payees, uint256[] memory _shares, bytes32 _salt)
+    function predict(address[] memory _payees, uint256[] memory _shares, uint256 _nonce)
         external
         view
         returns (address)
     {
-        return
-            Clones.predictDeterministicAddress(implementation, _paramHashedSalt(_payees, _shares, _salt), address(this));
+        return Clones.predictDeterministicAddress(
+            implementation, _paramHashedSalt(_payees, _shares, _nonce), address(this)
+        );
     }
 
-    function deployWithReimbursement(address[] memory _payees, uint256[] memory _shares, bytes32 _salt)
-        external
-        returns (IPizza pizza)
-    {
-        pizza = IPizza(address(Clones.cloneDeterministic(implementation, _salt)));
-        pizza.initialize(_payees, _shares);
-        // pizza.reimburse{value: msg.value}();
-    }
-
-    function _paramHashedSalt(address[] memory _payees, uint256[] memory _shares, bytes32 _salt)
+    function _paramHashedSalt(address[] memory _payees, uint256[] memory _shares, uint256 _nonce)
         internal
         pure
         returns (bytes32)
     {
-        return keccak256(abi.encode(_payees, _shares, _salt));
+        return keccak256(abi.encode(_payees, _shares, _nonce));
     }
 }
