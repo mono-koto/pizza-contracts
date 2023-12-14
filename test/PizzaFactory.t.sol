@@ -39,9 +39,8 @@ contract CounterTest is Test {
         vm.prank(sender);
         payable(p).transfer(1 ether);
 
-        p.release(payable(payees[0]));
+        p.release();
         assertEq(payable(payees[0]).balance, 0.4 ether);
-        p.release(payable(payees[1]));
         assertEq(payable(payees[1]).balance, 0.6 ether);
     }
 }
