@@ -1,6 +1,6 @@
-name: test
+name: Test
 
-on: workflow_dispatch
+on: [push]
 
 env:
   FOUNDRY_PROFILE: ci
@@ -21,6 +21,11 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
+
+      - name: Check Forge Format
+        run: |
+          forge fmt --check
+        id: fmt-check
 
       - name: Run Forge build
         run: |
