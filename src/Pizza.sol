@@ -16,23 +16,63 @@ import {Address} from "openzeppelin-contracts/utils/Address.sol";
 contract Pizza is Initializable, Context {
     using SafeERC20 for IERC20;
 
+    /**
+     * @dev Emitted when a payment is received.
+     * @param from The address from which the payment is received.
+     * @param amount The amount of the payment.
+     */
     event PaymentReceived(address from, uint256 amount);
+
+    /**
+     * @dev Emitted when funds are released.
+     * @param amount The amount of funds released.
+     */
     event Release(uint256 amount);
+
+    /**
+     * @dev Emitted when ERC20 tokens are released.
+     * @param token The ERC20 token being released.
+     * @param amount The amount of ERC20 tokens released.
+     */
     event ERC20Release(IERC20 indexed token, uint256 amount);
 
+    /**
+     * @dev The total number of shares.
+     */
     uint256 public totalShares;
+
+    /**
+     * @dev The total amount of funds released.
+     */
     uint256 public totalReleased;
+
+    /**
+     * @dev The address of payee.
+     */
     address[] public payee;
+
+    /**
+     * @dev The shares owed to each payee.
+     */
     mapping(address => uint256) public shares;
+
+    /**
+     * @dev The total amount released for a token.
+     */
     mapping(IERC20 => uint256) public erc20TotalReleased;
 
-    // uint32 public releaseBountyBIPS;
-    // uint256 public constant BIPS_PRECISION = 10000;
+    uint32 public releaseBountyBIPS;
+    uint256 public constant BIPS_PRECISION = 10000;
 
     constructor() {
         _disableInitializers();
     }
 
+    /**
+     * @dev Initializes the contract with the specified payees and shares.
+     * @param _payees The addresses of the payees.
+     * @param _shares The corresponding shares of each payee.
+     */
     function initialize(address[] memory _payees, uint256[] memory _shares) external initializer {
         require(_payees.length == _shares.length, "PaymentSplitter: payees and shares length mismatch");
         require(_payees.length > 0, "PaymentSplitter: no payees");
@@ -55,6 +95,9 @@ contract Pizza is Initializable, Context {
         emit PaymentReceived(_msgSender(), msg.value);
     }
 
+    /**
+     * @dev Releases available ETH balance.
+     */
     function release() external {
         uint256 totalReleasable = address(this).balance;
         require(totalReleasable > 0, "PaymentSplitter: no payment is due");
@@ -65,6 +108,10 @@ contract Pizza is Initializable, Context {
         emit Release(totalReleasable);
     }
 
+    /**
+     * @dev Releases available ERC20 token balance.
+     * @param token The ERC20 token to be released.
+     */
     function erc20Release(IERC20 token) external {
         uint256 erc20TotalReleasable = token.balanceOf(address(this));
         require(erc20TotalReleasable > 0, "PaymentSplitter: no payment is due");
@@ -75,14 +122,34 @@ contract Pizza is Initializable, Context {
         emit ERC20Release(token, erc20TotalReleasable);
     }
 
+    function releaseWithBounty(address bountyReceiver) external {
+        uint256 bounty = address(this).balance * releaseBountyBIPS / BIPS_PRECISION;
+        uint256 totalReleasable = address(this).balance - bounty;
+        require(totalReleasable > 0, "PaymentSplitter: no payment is due");
+        totalReleased += totalReleasable;
+        for (uint256 i = 0; i < payee.length; i++) {
+            _releaseTo(totalReleasable, payee[i]);
+        }
+        _releaseTo(bounty, bountyReceiver);
+        emit Release(totalReleasable);
+    }
+
     /* //////////////////////////////////////////////////////////////////////// 
                                       Getters
     //////////////////////////////////////////////////////////////////////// */
 
+    /**
+     * @dev Returns the number of payees.
+     * @return The number of payees as a uint256 value.
+     */
     function numPayees() external view returns (uint256) {
         return payee.length;
     }
 
+    /**
+     * @dev Returns an array of payees.
+     * @return An array of addresses representing the payees.
+     */
     function payees() external view returns (address[] memory) {
         return payee;
     }
