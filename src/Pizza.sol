@@ -6,6 +6,7 @@ import {SafeERC20} from "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol"
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import {Context} from "openzeppelin-contracts/utils/Context.sol";
 import {Address} from "openzeppelin-contracts/utils/Address.sol";
+import {Multicall} from "openzeppelin-contracts/utils/Multicall.sol";
 
 /**
  * @title Pizza
@@ -13,7 +14,7 @@ import {Address} from "openzeppelin-contracts/utils/Address.sol";
  *      It allows for the release of ERC20 tokens as well as Ether.
  *      Releases are modified to be only callable in a batch, rather than individually.
  */
-contract Pizza is Initializable, Context {
+contract Pizza is Initializable, Context, Multicall {
     using SafeERC20 for IERC20;
 
     /**
@@ -120,18 +121,6 @@ contract Pizza is Initializable, Context {
             _erc20ReleaseTo(erc20TotalReleasable, token, payee[i]);
         }
         emit ERC20Release(token, erc20TotalReleasable);
-    }
-
-    function releaseWithBounty(address bountyReceiver) external {
-        uint256 bounty = address(this).balance * releaseBountyBIPS / BIPS_PRECISION;
-        uint256 totalReleasable = address(this).balance - bounty;
-        require(totalReleasable > 0, "PaymentSplitter: no payment is due");
-        totalReleased += totalReleasable;
-        for (uint256 i = 0; i < payee.length; i++) {
-            _releaseTo(totalReleasable, payee[i]);
-        }
-        _releaseTo(bounty, bountyReceiver);
-        emit Release(totalReleasable);
     }
 
     /* //////////////////////////////////////////////////////////////////////// 
