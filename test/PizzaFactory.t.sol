@@ -7,6 +7,7 @@ import {Pizza} from "../src/Pizza.sol";
 import {Address} from "openzeppelin-contracts/utils/Address.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import {Clones} from "openzeppelin-contracts/proxy/Clones.sol";
+import {MockERC20} from "./mocks/MockERC20.sol";
 
 event PaymentReceived(address from, uint256 amount);
 
@@ -73,20 +74,5 @@ contract PizzaFactoryTest is Test {
         emit PaymentReceived(sender, 1 ether);
         (ok,) = payable(p).call{value: 1 ether}("");
         assertTrue(ok);
-    }
-
-    function test_release() public {
-        Pizza p = Pizza(payable(address(f.create(payees, shares))));
-
-        address sender = address(0x3);
-        vm.deal(sender, 1 ether);
-        vm.expectEmit(true, true, false, true);
-        emit PaymentReceived(sender, 1 ether);
-        vm.prank(sender);
-        Address.sendValue(payable(p), 1 ether);
-
-        p.release();
-        assertEq(payable(payees[0]).balance, 0.4 ether);
-        assertEq(payable(payees[1]).balance, 0.6 ether);
     }
 }

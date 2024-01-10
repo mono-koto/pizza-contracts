@@ -7,6 +7,7 @@ import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import {Context} from "openzeppelin-contracts/utils/Context.sol";
 import {Address} from "openzeppelin-contracts/utils/Address.sol";
 import {Multicall} from "openzeppelin-contracts/utils/Multicall.sol";
+import {ReentrancyGuard} from "openzeppelin-contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title Pizza
@@ -14,8 +15,15 @@ import {Multicall} from "openzeppelin-contracts/utils/Multicall.sol";
  *      It allows for the release of ERC20 tokens as well as Ether.
  *      Releases are modified to be only callable in a batch, rather than individually.
  */
-contract Pizza is Initializable, Context, Multicall {
+contract Pizza is Initializable, Context, Multicall, ReentrancyGuard {
     using SafeERC20 for IERC20;
+
+    error NoPaymentDue();
+    error AccoundHasZeroShares(address);
+    error DuplicateAccount(address);
+    error AccountIsZeroAddress(address);
+    error PayeeShareLengthMismatch();
+    error NoPayees();
 
     /**
      * @dev Emitted when a payment is received.
@@ -75,8 +83,12 @@ contract Pizza is Initializable, Context, Multicall {
      * @param _shares The corresponding shares of each payee.
      */
     function initialize(address[] memory _payees, uint256[] memory _shares) external initializer {
-        require(_payees.length == _shares.length, "PaymentSplitter: payees and shares length mismatch");
-        require(_payees.length > 0, "PaymentSplitter: no payees");
+        if (_payees.length != _shares.length) {
+            revert PayeeShareLengthMismatch();
+        }
+        if (_payees.length == 0) {
+            revert NoPayees();
+        }
 
         for (uint256 i = 0; i < _payees.length; i++) {
             _addPayee(_payees[i], _shares[i]);
@@ -101,26 +113,42 @@ contract Pizza is Initializable, Context, Multicall {
      */
     function release() external {
         uint256 totalReleasable = address(this).balance;
-        require(totalReleasable > 0, "PaymentSplitter: no payment is due");
-        totalReleased += totalReleasable;
+        address account;
+        uint256 amountToPay;
+        uint256 released;
         for (uint256 i = 0; i < payee.length; i++) {
-            _releaseTo(totalReleasable, payee[i]);
+            account = payee[i];
+            amountToPay = totalReleasable * shares[account] / totalShares;
+            released += amountToPay;
+            Address.sendValue(payable(account), amountToPay);
         }
-        emit Release(totalReleasable);
+        if (released == 0) {
+            revert NoPaymentDue();
+        }
+        totalReleased += released;
+        emit Release(released);
     }
 
     /**
      * @dev Releases available ERC20 token balance.
      * @param token The ERC20 token to be released.
      */
-    function erc20Release(IERC20 token) external {
+    function erc20Release(IERC20 token) external nonReentrant {
         uint256 erc20TotalReleasable = token.balanceOf(address(this));
-        require(erc20TotalReleasable > 0, "PaymentSplitter: no payment is due");
-        erc20TotalReleased[token] += erc20TotalReleasable;
+        address account;
+        uint256 amountToPay;
+        uint256 released;
         for (uint256 i = 0; i < payee.length; i++) {
-            _erc20ReleaseTo(erc20TotalReleasable, token, payee[i]);
+            account = payee[i];
+            amountToPay = (erc20TotalReleasable * shares[account]) / totalShares;
+            released += amountToPay;
+            SafeERC20.safeTransfer(token, payable(account), amountToPay);
         }
-        emit ERC20Release(token, erc20TotalReleasable);
+        if (released == 0) {
+            revert NoPaymentDue();
+        }
+        erc20TotalReleased[token] += released;
+        emit ERC20Release(token, released);
     }
 
     /* //////////////////////////////////////////////////////////////////////// 
@@ -147,31 +175,21 @@ contract Pizza is Initializable, Context, Multicall {
                                       Private
     //////////////////////////////////////////////////////////////////////// */
 
-    function _releaseTo(uint256 totalReleasable, address account) private {
-        uint256 amountToPay = totalReleasable * shares[account] / totalShares;
-        Address.sendValue(payable(account), amountToPay);
-    }
-
-    /**
-     * @dev Releases a specified amount of ERC20 tokens to a specified account.
-     * @param erc20TotalReleasable The amount of ERC20 tokens to release.
-     * @param token The ERC20 token contract.
-     * @param account The account to receive the released tokens.
-     */
-    function _erc20ReleaseTo(uint256 erc20TotalReleasable, IERC20 token, address account) private {
-        uint256 amountToPay = erc20TotalReleasable * shares[account] / totalShares;
-        SafeERC20.safeTransfer(token, payable(account), amountToPay);
-    }
-
     /**
      * @dev Add a new payee to the contract.
      * @param account The address of the payee to add.
      * @param _shares The number of shares owned by the payee.
      */
     function _addPayee(address account, uint256 _shares) private {
-        require(account != address(0), "PaymentSplitter: account is the zero address");
-        require(_shares > 0, "PaymentSplitter: shares are 0");
-        require(shares[account] == 0, "PaymentSplitter: account already has shares");
+        if (account == address(0)) {
+            revert AccountIsZeroAddress(account);
+        }
+        if (_shares == 0) {
+            revert AccoundHasZeroShares(account);
+        }
+        if (shares[account] != 0) {
+            revert DuplicateAccount(account);
+        }
 
         payee.push(account);
         shares[account] = _shares;
