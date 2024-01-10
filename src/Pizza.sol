@@ -112,9 +112,9 @@ contract Pizza is Initializable, Context, Multicall, ReentrancyGuard {
     mapping(IERC20 => uint256) public erc20TotalReleased;
 
     /**
-     * @notice The amount of funds released to a payee.
+     * @notice The bounty paid to releaser.
      */
-    uint32 public releaseBountyBIPS;
+    uint32 public releaseBountyBIPs;
 
     /* //////////////////////////////////////////////////////////////////////// 
                            Construction + Initialization
@@ -128,18 +128,42 @@ contract Pizza is Initializable, Context, Multicall, ReentrancyGuard {
      * @notice Initializes the contract with the specified payees and shares.
      * @param _payees The addresses of the payees.
      * @param _shares The corresponding shares of each payee.
+     * @param _releaseBountyBIPs The bounty paid to releaser.
      */
-    function initialize(address[] memory _payees, uint256[] memory _shares) external initializer {
-        if (_payees.length != _shares.length) {
-            revert PayeeShareLengthMismatch();
-        }
-        if (_payees.length == 0) {
-            revert NoPayees();
-        }
+    function initialize(address[] memory _payees, uint256[] memory _shares, uint32 _releaseBountyBIPs)
+        external
+        initializer
+    {
+        _initializePayeeShares(_payees, _shares);
+        releaseBountyBIPs = _releaseBountyBIPs;
+    }
 
-        for (uint256 i = 0; i < _payees.length; i++) {
-            _addPayee(_payees[i], _shares[i]);
+    /**
+     * @notice Initializes the contract with the specified payees and shares.
+     * @param _payees The addresses of the payees.
+     * @param _shares The corresponding shares of each payee.
+     * @param _releaseBountyBIPs The bounty paid to releaser.
+     * @param _deployBountyBIPs The bounty paid to deployer.
+     * @param _deployBountyTokens The tokens to pay to deployer.
+     */
+    function initializeWithBounty(
+        address[] memory _payees,
+        uint256[] memory _shares,
+        uint32 _releaseBountyBIPs,
+        uint32 _deployBountyBIPs,
+        IERC20[] memory _deployBountyTokens
+    ) external initializer {
+        _initializePayeeShares(_payees, _shares);
+        releaseBountyBIPs = _releaseBountyBIPs;
+        address bountyReceiver = _msgSender();
+        for (uint256 i = 0; i < _deployBountyTokens.length; i++) {
+            SafeERC20.safeTransfer(
+                _deployBountyTokens[i],
+                bountyReceiver,
+                _deployBountyTokens[i].balanceOf(address(this)) * _deployBountyBIPs / BIPS_PRECISION
+            );
         }
+        Address.sendValue(payable(bountyReceiver), address(this).balance * _deployBountyBIPs / BIPS_PRECISION);
     }
 
     /* //////////////////////////////////////////////////////////////////////// 
@@ -163,7 +187,7 @@ contract Pizza is Initializable, Context, Multicall, ReentrancyGuard {
     /**
      * @notice Releases available ETH balance.
      */
-    function release() external {
+    function release() public {
         uint256 totalReleasable = address(this).balance;
         address account;
         uint256 amountToPay;
@@ -181,26 +205,24 @@ contract Pizza is Initializable, Context, Multicall, ReentrancyGuard {
         emit Release(released);
     }
 
+    function bountyRelease() external {
+        uint256 amountToPay = address(this).balance * releaseBountyBIPs / BIPS_PRECISION;
+        Address.sendValue(payable(_msgSender()), amountToPay);
+        release();
+    }
+
     /**
      * @notice Releases available ERC20 token balance.
      * @param token The ERC20 token to be released.
      */
-    function erc20Release(IERC20 token) external nonReentrant {
-        uint256 erc20TotalReleasable = token.balanceOf(address(this));
-        address account;
-        uint256 amountToPay;
-        uint256 released;
-        for (uint256 i = 0; i < payee.length; ++i) {
-            account = payee[i];
-            amountToPay = (erc20TotalReleasable * shares[account]) / totalShares;
-            released += amountToPay;
-            SafeERC20.safeTransfer(token, payable(account), amountToPay);
-        }
-        if (released == 0) {
-            revert NoPaymentDue();
-        }
-        erc20TotalReleased[token] += released;
-        emit ERC20Release(token, released);
+    function erc20Release(IERC20 token) public nonReentrant {
+        _erc20Release(token);
+    }
+
+    function bountyERC20Release(IERC20 token) external nonReentrant {
+        uint256 amountToPay = token.balanceOf(address(this)) * releaseBountyBIPs / BIPS_PRECISION;
+        SafeERC20.safeTransfer(token, payable(_msgSender()), amountToPay);
+        _erc20Release(token);
     }
 
     /* //////////////////////////////////////////////////////////////////////// 
@@ -227,6 +249,19 @@ contract Pizza is Initializable, Context, Multicall, ReentrancyGuard {
                                       Helpers
     //////////////////////////////////////////////////////////////////////// */
 
+    function _initializePayeeShares(address[] memory _payees, uint256[] memory _shares) private {
+        if (_payees.length != _shares.length) {
+            revert PayeeShareLengthMismatch();
+        }
+        if (_payees.length == 0) {
+            revert NoPayees();
+        }
+
+        for (uint256 i = 0; i < _payees.length; i++) {
+            _addPayee(_payees[i], _shares[i]);
+        }
+    }
+
     /**
      * @notice Add a new payee to the contract.
      * @param account The address of the payee to add.
@@ -242,9 +277,30 @@ contract Pizza is Initializable, Context, Multicall, ReentrancyGuard {
         if (shares[account] != 0) {
             revert DuplicatePayee(account);
         }
-
         payee.push(account);
         shares[account] = _shares;
         totalShares = totalShares + _shares;
+    }
+
+    /**
+     * @notice Releases available ERC20 token balance.
+     * @param token The ERC20 token to be released.
+     */
+    function _erc20Release(IERC20 token) private {
+        uint256 erc20TotalReleasable = token.balanceOf(address(this));
+        address account;
+        uint256 amountToPay;
+        uint256 released;
+        for (uint256 i = 0; i < payee.length; ++i) {
+            account = payee[i];
+            amountToPay = (erc20TotalReleasable * shares[account]) / totalShares;
+            released += amountToPay;
+            SafeERC20.safeTransfer(token, payable(account), amountToPay);
+        }
+        if (released == 0) {
+            revert NoPaymentDue();
+        }
+        erc20TotalReleased[token] += released;
+        emit ERC20Release(token, released);
     }
 }

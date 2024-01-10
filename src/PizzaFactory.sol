@@ -4,6 +4,7 @@ pragma solidity 0.8.23;
 import {Clones} from "openzeppelin-contracts/proxy/Clones.sol";
 import {IPizzaInitializer} from "./IPizzaInitializer.sol";
 import {Context} from "openzeppelin-contracts/utils/Context.sol";
+import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
 event PizzaCreated(address indexed pizza);
 
@@ -45,14 +46,42 @@ contract PizzaFactory is Context {
     }
 
     function createDeterministic(address[] memory _payees, uint256[] memory _shares, uint256 _salt)
-        external
+        public
         returns (address pizza)
     {
         pizza = address(Clones.cloneDeterministic(implementation, keccak256(abi.encode(_payees, _shares, _salt))));
         _initPizza(pizza, _payees, _shares);
     }
 
-    function predict(address[] memory _payees, uint256[] memory _shares, uint256 _salt)
+    function predictPizza(address[] memory _payees, uint256[] memory _shares, uint256 _salt)
+        external
+        view
+        returns (address)
+    {
+        return Clones.predictDeterministicAddress(
+            implementation, keccak256(abi.encode(_payees, _shares, _salt)), address(this)
+        );
+    }
+
+    function createDeterministic(
+        address[] memory _payees,
+        uint256[] memory _shares,
+        uint32 _releaseBountyBIPs,
+        uint256 _salt,
+        uint32 _deployBountyBIPs,
+        IERC20[] memory _deployBountyTokens
+    ) public returns (address pizza) {
+        pizza = address(
+            Clones.cloneDeterministic(
+                implementation, keccak256(abi.encode(_payees, _shares, _releaseBountyBIPs, _salt))
+            )
+        );
+        IPizzaInitializer(pizza).initializeWithBounty(_payees, _shares, _deployBounty);
+        pizzas[pizza] = _msgSender();
+        emit PizzaCreated(pizza);
+    }
+
+    function predictBountyPizza(address[] memory _payees, uint256[] memory _shares, uint256 _salt)
         external
         view
         returns (address)
