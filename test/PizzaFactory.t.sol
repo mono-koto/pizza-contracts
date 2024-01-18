@@ -8,6 +8,7 @@ import {Address} from "openzeppelin-contracts/utils/Address.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import {Clones} from "openzeppelin-contracts/proxy/Clones.sol";
 import {MockERC20} from "./mocks/MockERC20.sol";
+import {DeployPizzaFactory} from "../script/PizzaFactory.s.sol";
 
 event PaymentReceived(address from, uint256 amount);
 
@@ -17,7 +18,7 @@ contract PizzaFactoryTest is Test {
     uint256[] shares;
 
     function setUp() public {
-        f = new PizzaFactory(address(new Pizza()));
+        (, f) = new DeployPizzaFactory().run();
 
         payees.push(address(0x1));
         payees.push(address(0x2));

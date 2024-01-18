@@ -8,6 +8,7 @@ import {Address} from "openzeppelin-contracts/utils/Address.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import {Clones} from "openzeppelin-contracts/proxy/Clones.sol";
 import {MockERC20} from "./mocks/MockERC20.sol";
+import {DeployPizzaFactory} from "../script/PizzaFactory.s.sol";
 
 event PaymentReceived(address from, uint256 amount);
 
@@ -16,9 +17,11 @@ contract PizzaTest is Test {
     address[] payees;
     uint256[] shares;
     Pizza pizza;
+    MockERC20 token;
 
     function setUp() public {
-        f = new PizzaFactory(address(new Pizza()));
+        token = new MockERC20("ERC20", "ERC20");
+        (, f) = new DeployPizzaFactory().run();
         payees.push(address(0x1));
         payees.push(address(0x2));
         shares.push(2);
@@ -44,6 +47,24 @@ contract PizzaTest is Test {
         assertEq(pizza.totalReleased(), 1 ether);
     }
 
+    function test_fuzzRelease(uint256 amount) public {
+        vm.assume(amount < type(uint256).max / 10);
+        vm.deal(payable(pizza), amount);
+
+        uint256 expectedAmountA = shares[0] * amount / pizza.totalShares();
+        uint256 expectedAMountB = shares[1] * amount / pizza.totalShares();
+        if (expectedAmountA + expectedAMountB == 0) {
+            vm.expectRevert(abi.encodeWithSelector(Pizza.NoPaymentDue.selector));
+            pizza.release();
+        } else {
+            pizza.release();
+            assertEq(payable(payees[0]).balance, expectedAmountA);
+            assertEq(payable(payees[1]).balance, expectedAMountB);
+            assertEq(payable(pizza).balance, amount - expectedAmountA - expectedAMountB);
+            assertEq(pizza.totalReleased(), expectedAmountA + expectedAMountB);
+        }
+    }
+
     function test_releaseSmallAmount() public {
         vm.deal(payable(pizza), 1 wei);
         vm.expectRevert(abi.encodeWithSelector(Pizza.NoPaymentDue.selector));
@@ -57,7 +78,6 @@ contract PizzaTest is Test {
     }
 
     function test_erc20Release() public {
-        MockERC20 token = new MockERC20("ERC20", "ERC20");
         token.transfer(address(pizza), 1e18);
         pizza.erc20Release(token);
         assertEq(token.balanceOf(payees[0]), 4e17);
@@ -67,7 +87,6 @@ contract PizzaTest is Test {
     }
 
     function test_erc20ReleaseSmallAmount() public {
-        MockERC20 token = new MockERC20("ERC20", "ERC20");
         token.transfer(address(pizza), 1);
         vm.expectRevert(abi.encodeWithSelector(Pizza.NoPaymentDue.selector));
         pizza.erc20Release(token);

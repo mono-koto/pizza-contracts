@@ -1,0 +1,4 @@
+{
+  "solidity.monoRepoSupport": false,
+  "solidity.formatter": "forge"
+}

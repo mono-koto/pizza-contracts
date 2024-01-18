@@ -1,66 +1,33 @@
-## Foundry
+# 🍕 Pizza.split Contracts
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+This is the smart contracts repo for pizza.split, a little protocol + [dApp](/mono-koto/pizza-ui) for splitting ETH and ERC-20s among friends.
 
-Foundry consists of:
+This project was created in collaboration with [Garden Labs](https://gardenlabs.xyz) and funded by [PayPal](https://paypal.com/) to explore and demonstrate developer use cases of the [PYUSD ERC-20 stablecoin](https://www.paypal.com/us/digital-wallet/manage-money/crypto/pyusd).
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+## Dependencies
 
-## Documentation
+[Install Foundry](https://book.getfoundry.sh/getting-started/installation).
 
-https://book.getfoundry.sh/
+Clone the repo.
 
-## Usage
+Run `forge install`.
 
-### Build
+## Configuration
 
-```shell
-$ forge build
+Copy the `.env.example` file to `.env` and fill in your own values.
+
+## Testing
+
+```
+make
 ```
 
-### Test
+See Foundry docs for more testing options.
 
-```shell
-$ forge test
+## Deployment
+
+Check out the [Makefile](./Makefile) for build/deploy targets. Example:
+
 ```
-
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+make deploy-sepolia
 ```

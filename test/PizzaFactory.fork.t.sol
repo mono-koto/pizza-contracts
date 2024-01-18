@@ -7,6 +7,7 @@ import {Pizza} from "../src/Pizza.sol";
 import {Address} from "openzeppelin-contracts/utils/Address.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import {Clones} from "openzeppelin-contracts/proxy/Clones.sol";
+import {DeployPizzaFactory} from "../script/PizzaFactory.s.sol";
 
 event PaymentReceived(address from, uint256 amount);
 
@@ -18,7 +19,7 @@ contract PizzaFactoryForkTest is Test {
     function setUp() public {
         vm.createSelectFork("mainnet", 18814000);
 
-        f = new PizzaFactory(address(new Pizza()));
+        (, f) = new DeployPizzaFactory().run();
 
         payees.push(vm.createWallet("wallet a").addr);
         payees.push(vm.createWallet("wallet b").addr);
