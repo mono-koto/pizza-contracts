@@ -283,7 +283,6 @@ contract Pizza is Initializable, Context, Multicall, ReentrancyGuard {
      * @notice Releases the ETH bounty to the bounty receiver.
      * @param _bountyReceiver The address of the bounty receiver.
      */
-
     function _payBounty(address _bountyReceiver) private {
         uint256 bountyAmount = address(this).balance * bounty / BOUNTY_PRECISION;
         if (bountyAmount > 0) {
