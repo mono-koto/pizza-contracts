@@ -27,7 +27,7 @@ contract PizzaFactoryTest is Test {
     }
 
     function test_createDeterministic(uint256 nonce) public {
-        address predicted = f.predict(payees, shares, nonce);
+        address predicted = f.predict(payees, shares, 0, nonce);
         vm.expectEmit(true, true, true, true);
         emit PizzaCreated(predicted);
         Pizza p = Pizza(payable(address(f.createDeterministic(payees, shares, nonce))));

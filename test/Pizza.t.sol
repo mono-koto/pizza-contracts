@@ -91,4 +91,53 @@ contract PizzaTest is Test {
         vm.expectRevert(abi.encodeWithSelector(Pizza.NoPaymentDue.selector));
         pizza.erc20Release(token);
     }
+
+    function test_bountyCreateInvalidBounty(uint256 salt, uint256 bounty) public {
+        vm.assume(bounty > pizza.BOUNTY_PRECISION());
+        address predicted = f.predict(payees, shares, bounty, salt);
+        address[] memory bountyTokens = new address[](2);
+        bountyTokens[0] = address(token);
+        bountyTokens[1] = address(0);
+        address bountyDeployer = address(0x3);
+        address bountyReceiver = address(0x4);
+        token.transfer(address(predicted), 1e18);
+        vm.deal(payable(predicted), 2e18);
+
+        vm.expectRevert(abi.encodeWithSelector(Pizza.InvalidBounty.selector));
+        f.createDeterministicAndRelease(payees, shares, salt, bounty, bountyTokens, bountyReceiver);
+    }
+
+    function test_bountyCreate(uint256 salt) public {
+        uint256 bounty = 1e4; // 0.01 aka 1%
+        address predicted = f.predict(payees, shares, bounty, salt);
+
+        // Now some balances accumulate on the undeployed address
+
+        token.transfer(address(predicted), 1e18);
+        vm.deal(payable(predicted), 2e18);
+
+        // Now we a deployer/releaser comes along and is willing to pay to release
+        // the funds. Their designated receiver will get the bounty.
+
+        address[] memory bountyTokens = new address[](2);
+        bountyTokens[0] = address(token);
+        bountyTokens[1] = address(0);
+        address bountyDeployer = address(0x3);
+        address bountyReceiver = address(0x4);
+
+        vm.prank(bountyDeployer);
+        f.createDeterministicAndRelease(payees, shares, salt, bounty, bountyTokens, bountyReceiver);
+
+        assertEq(token.balanceOf(bountyDeployer), 0);
+        assertEq(token.balanceOf(bountyReceiver), 1e16);
+        assertEq(token.balanceOf(predicted), 0);
+        assertEq(token.balanceOf(payees[0]), 396e15);
+        assertEq(token.balanceOf(payees[1]), 594e15);
+
+        assertEq(bountyDeployer.balance, 0);
+        assertEq(bountyReceiver.balance, 2e16);
+        assertEq(predicted.balance, 0);
+        assertEq(payees[0].balance, 792e15);
+        assertEq(payees[1].balance, 1188e15);
+    }
 }

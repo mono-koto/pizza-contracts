@@ -41,33 +41,53 @@ contract PizzaFactory is Context {
 
     function create(address[] memory _payees, uint256[] memory _shares) external returns (address pizza) {
         pizza = address(Clones.clone(implementation));
-        _initPizza(pizza, _payees, _shares);
+        _initFreePizza(pizza, _payees, _shares);
     }
 
     function createDeterministic(address[] memory _payees, uint256[] memory _shares, uint256 _salt)
         external
         returns (address pizza)
     {
-        pizza = address(Clones.cloneDeterministic(implementation, keccak256(abi.encode(_payees, _shares, _salt))));
-        _initPizza(pizza, _payees, _shares);
+        pizza = address(Clones.cloneDeterministic(implementation, salt(_payees, _shares, 0, _salt)));
+        _initFreePizza(pizza, _payees, _shares);
     }
 
-    function predict(address[] memory _payees, uint256[] memory _shares, uint256 _salt)
+    function createDeterministicAndRelease(
+        address[] memory _payees,
+        uint256[] memory _shares,
+        uint256 _salt,
+        uint256 _bounty,
+        address[] memory _bountyTokens,
+        address _bountyReceiver
+    ) external returns (address pizza) {
+        pizza = address(Clones.cloneDeterministic(implementation, salt(_payees, _shares, _bounty, _salt)));
+        IPizzaInitializer(pizza).initializeWithBountyRelease(_payees, _shares, _bounty, _bountyTokens, _bountyReceiver);
+        pizzas[pizza] = _msgSender();
+        emit PizzaCreated(pizza);
+    }
+
+    function predict(address[] memory _payees, uint256[] memory _shares, uint256 _bounty, uint256 _salt)
         external
         view
         returns (address)
     {
-        return Clones.predictDeterministicAddress(
-            implementation, keccak256(abi.encode(_payees, _shares, _salt)), address(this)
-        );
+        return Clones.predictDeterministicAddress(implementation, salt(_payees, _shares, _bounty, _salt), address(this));
     }
 
     /* //////////////////////////////////////////////////////////////////////// 
                                        Private
     //////////////////////////////////////////////////////////////////////// */
 
-    function _initPizza(address _pizza, address[] memory _payees, uint256[] memory _shares) private {
-        IPizzaInitializer(_pizza).initialize(_payees, _shares);
+    function salt(address[] memory _payees, uint256[] memory _shares, uint256 _bounty, uint256 _salt)
+        private
+        pure
+        returns (bytes32)
+    {
+        return keccak256(abi.encode(_payees, _shares, _bounty, _salt));
+    }
+
+    function _initFreePizza(address _pizza, address[] memory _payees, uint256[] memory _shares) private {
+        IPizzaInitializer(_pizza).initialize(_payees, _shares, 0);
         pizzas[_pizza] = _msgSender();
         emit PizzaCreated(_pizza);
     }
