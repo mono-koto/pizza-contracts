@@ -41,7 +41,6 @@ contract PizzaFactory {
      * @param _shares The corresponding shares of each payee.
      * @return pizza address of the newly created Pizza contract.
      */
-
     function create(address[] memory _payees, uint256[] memory _shares) external returns (address pizza) {
         pizza = address(Clones.clone(implementation));
         IPizzaInitializer(pizza).initialize(_payees, _shares, 0);
