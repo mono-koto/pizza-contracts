@@ -8,10 +8,14 @@ import {Multicall} from "openzeppelin-contracts/utils/Multicall.sol";
 import {ReentrancyGuardUpgradeable} from "openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 /**
- * @title Pizza
- * @notice This contract is a simplification of OpenZeppelin's PaymentSplitter.
- *      It allows for the release of ERC20 tokens as well as Ether.
- *      Releases are modified to be only callable in a batch, rather than individually.
+ * @title Pizza Splitter Contract
+ * @notice This contract is a simplified payment splitter.
+ * It allows for the release of ERC20 tokens as well as native value (ETH).
+ * Unlike other payment splitters, releases are only callable in a batch,
+ * such that all recipients are paid out at once. Can be initialized with a
+ * bounty percentage indicating the percentage of the releasable value to
+ * be sent to a bounty receiver.
+ * @author Mono Koto (mono-koto.eth)
  */
 contract Pizza is Multicall, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;

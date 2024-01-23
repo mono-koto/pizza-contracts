@@ -6,7 +6,8 @@ import {IPizzaInitializer} from "./IPizzaInitializer.sol";
 
 /**
  * @title PizzaFactory
- * @dev A contract for creating {IPizzaInitializer} splitter contracts.
+ * @dev A contract for creating Pizza splitter contracts.
+ * @author Mono Koto (mono-koto.eth)
  */
 contract PizzaFactory {
     /* //////////////////////////////////////////////////////////////////////// 
