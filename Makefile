@@ -4,9 +4,11 @@
 
 # .SILENT:
 
+LIVENET_DEPLOY_COMMAND = forge script script/PizzaFactory.s.sol:DeployPizzaFactory --private-key ${PRIVATE_KEY} -vvvv
+
 .PHONY: all test clean 
 
-all: clean update build
+all:; forge test -vvv -w
 
 # Clean the repo
 clean  :; forge clean
@@ -34,13 +36,11 @@ abi:
 # solhint should be installed globally
 lint :; solhint src/**/*.sol && solhint src/*.sol
 
-anvil :; anvil -m 'test test test test test test test test test test test junk'
+deploy-mainnet-dryrun :; @${LIVENET_DEPLOY_COMMAND} --rpc-url mainnet 
+deploy-sepolia-dryrun :; @${LIVENET_DEPLOY_COMMAND} --rpc-url sepolia 
 
-# use the "@" to hide the command from your shell 
-deploy-mainnet :; @forge script script/PizzaFactory.s.sol:DeployPizzaFactory --rpc-url mainnet --private-key ${PRIVATE_KEY} -vvvv
-
-# use the "@" to hide the command from your shell 
-deploy-sepolia :; @forge script script/PizzaFactory.s.sol:DeployPizzaFactory --rpc-url sepolia --private-key ${PRIVATE_KEY} -vvvv
+deploy-mainnet :; @${LIVENET_DEPLOY_COMMAND} --rpc-url mainnet --broadcast --verify 
+deploy-sepolia :; @${LIVENET_DEPLOY_COMMAND} --rpc-url sepolia --broadcast --verify
 
 # anvil deploy with the default user
 deploy-anvil :; @forge script script/PizzaFactory.s.sol:DeployPizzaFactory --rpc-url http://localhost:8545  --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast 

@@ -2,7 +2,7 @@
 pragma solidity 0.8.23;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {PizzaFactory, PizzaCreated} from "../src/PizzaFactory.sol";
+import {PizzaFactory} from "../src/PizzaFactory.sol";
 import {Pizza} from "../src/Pizza.sol";
 import {Address} from "openzeppelin-contracts/utils/Address.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
@@ -29,7 +29,7 @@ contract PizzaFactoryTest is Test {
     function test_create(uint256 nonce) public {
         address predicted = f.predict(payees, shares, 0, nonce);
         vm.expectEmit(true, true, true, true);
-        emit PizzaCreated(predicted, address(this));
+        emit PizzaFactory.PizzaCreated(predicted, address(this));
         Pizza p = Pizza(payable(address(f.create(payees, shares, nonce))));
         assertEq(address(p), predicted);
 

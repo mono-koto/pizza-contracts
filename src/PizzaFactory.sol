@@ -4,13 +4,16 @@ pragma solidity 0.8.23;
 import {Clones} from "openzeppelin-contracts/proxy/Clones.sol";
 import {IPizzaInitializer} from "./IPizzaInitializer.sol";
 
-event PizzaCreated(address indexed pizza, address indexed creator);
-
 /**
  * @title PizzaFactory
  * @dev A contract for creating {IPizzaInitializer} splitter contracts.
  */
 contract PizzaFactory {
+    /* //////////////////////////////////////////////////////////////////////// 
+                                       Events
+    //////////////////////////////////////////////////////////////////////// */
+    event PizzaCreated(address indexed pizza, address indexed creator);
+
     /* //////////////////////////////////////////////////////////////////////// 
                                        Storage
     //////////////////////////////////////////////////////////////////////// */

@@ -3,6 +3,7 @@ src = "src"
 out = "out"
 libs = ["lib"]
 via_ir = true
+solc = "0.8.23"
 
 [profile.forked]
 fork_block_number = 18814000

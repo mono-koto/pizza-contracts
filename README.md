@@ -18,6 +18,8 @@ Copy the `.env.example` file to `.env` and fill in your own values.
 
 ## Testing
 
+For this project I've gone ahead and just created a Makefile for common build targets. You can run tests with the bare `make` command:
+
 ```
 make
 ```
