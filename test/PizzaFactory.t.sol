@@ -26,11 +26,11 @@ contract PizzaFactoryTest is Test {
         shares.push(3);
     }
 
-    function test_createDeterministic(uint256 nonce) public {
+    function test_create(uint256 nonce) public {
         address predicted = f.predict(payees, shares, 0, nonce);
         vm.expectEmit(true, true, true, true);
-        emit PizzaCreated(predicted);
-        Pizza p = Pizza(payable(address(f.createDeterministic(payees, shares, nonce))));
+        emit PizzaCreated(predicted, address(this));
+        Pizza p = Pizza(payable(address(f.create(payees, shares, nonce))));
         assertEq(address(p), predicted);
 
         assertNotEq(address(p), address(0));
@@ -48,14 +48,14 @@ contract PizzaFactoryTest is Test {
         assertEq(p.erc20TotalReleased(IERC20(address(0))), 0);
     }
 
-    function test_createDeterministicOnce(uint256 nonce) public {
-        Pizza(payable(address(f.createDeterministic(payees, shares, nonce))));
+    function test_createOnce(uint256 nonce) public {
+        Pizza(payable(address(f.create(payees, shares, nonce))));
         vm.expectRevert(abi.encodeWithSelector(Clones.ERC1167FailedCreateClone.selector));
-        f.createDeterministic(payees, shares, nonce);
+        f.create(payees, shares, nonce);
     }
 
     function test_cloneReceive() public {
-        Pizza p = Pizza(payable(address(f.create(payees, shares))));
+        Pizza p = Pizza(payable(address(f.create(payees, shares, 0))));
 
         address sender = address(0x3);
         vm.deal(sender, 3 ether);

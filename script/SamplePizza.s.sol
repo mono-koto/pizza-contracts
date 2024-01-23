@@ -4,6 +4,10 @@ pragma solidity ^0.8.13;
 import {Script} from "forge-std/Script.sol";
 import {PizzaFactory} from "../src/PizzaFactory.sol";
 
+/**
+ * @title DeploySamplePizza
+ * @dev A contract for deploying a sample pizza contract.
+ */
 contract DeploySamplePizza is Script {
     function setUp() public {}
 
@@ -17,6 +21,6 @@ contract DeploySamplePizza is Script {
         uint256[] memory shares = new uint256[](2);
         shares[0] = 100;
         shares[1] = 100;
-        return address(f.create(payees, shares));
+        return address(f.create(payees, shares, 0));
     }
 }

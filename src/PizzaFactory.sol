@@ -4,7 +4,7 @@ pragma solidity 0.8.23;
 import {Clones} from "openzeppelin-contracts/proxy/Clones.sol";
 import {IPizzaInitializer} from "./IPizzaInitializer.sol";
 
-event PizzaCreated(address indexed pizza);
+event PizzaCreated(address indexed pizza, address indexed creator);
 
 /**
  * @title PizzaFactory
@@ -20,12 +20,6 @@ contract PizzaFactory {
      */
     address public implementation;
 
-    /**
-     * @dev A mapping that stores pizzas created.
-     * The key is the address of the pizza owner, and the value is a boolean indicating creator.
-     */
-    mapping(address => address) public pizzas;
-
     /* //////////////////////////////////////////////////////////////////////// 
                                        Constructor
     //////////////////////////////////////////////////////////////////////// */
@@ -38,20 +32,46 @@ contract PizzaFactory {
                                        Factory
     //////////////////////////////////////////////////////////////////////// */
 
+    /**
+     * @dev Creates a new Pizza contract with the given payees and shares.
+     * @param _payees The addresses of the payees.
+     * @param _shares The corresponding shares of each payee.
+     * @return pizza address of the newly created Pizza contract.
+     */
+
     function create(address[] memory _payees, uint256[] memory _shares) external returns (address pizza) {
         pizza = address(Clones.clone(implementation));
-        _initFreePizza(pizza, _payees, _shares);
+        IPizzaInitializer(pizza).initialize(_payees, _shares, 0);
+        emit PizzaCreated(pizza, msg.sender);
     }
 
-    function createDeterministic(address[] memory _payees, uint256[] memory _shares, uint256 _salt)
+    /**
+     * @dev Creates a new Pizza contract with the given payees, shares, and salt.
+     * @param _payees The addresses of the payees.
+     * @param _shares The corresponding shares of each payee.
+     * @param _salt The salt value used for deterministic cloning.
+     * @return pizza address of the newly created Pizza contract.
+     */
+    function create(address[] memory _payees, uint256[] memory _shares, uint256 _salt)
         external
         returns (address pizza)
     {
         pizza = address(Clones.cloneDeterministic(implementation, salt(_payees, _shares, 0, _salt)));
-        _initFreePizza(pizza, _payees, _shares);
+        IPizzaInitializer(pizza).initialize(_payees, _shares, 0);
+        emit PizzaCreated(pizza, msg.sender);
     }
 
-    function createDeterministicAndRelease(
+    /**
+     * @dev Creates a new Pizza contract with the given payees, shares, salt, bounty, bounty tokens, and bounty receiver.
+     * @param _payees The addresses of the payees.
+     * @param _shares The corresponding shares of each payee.
+     * @param _salt The salt value used for deterministic cloning.
+     * @param _bounty The bounty amount to be released.
+     * @param _bountyTokens The addresses of the bounty tokens.
+     * @param _bountyReceiver The address of the bounty receiver.
+     * @return pizza address of the newly created Pizza contract.
+     */
+    function createAndRelease(
         address[] memory _payees,
         uint256[] memory _shares,
         uint256 _salt,
@@ -61,10 +81,18 @@ contract PizzaFactory {
     ) external returns (address pizza) {
         pizza = address(Clones.cloneDeterministic(implementation, salt(_payees, _shares, _bounty, _salt)));
         IPizzaInitializer(pizza).initializeWithBountyRelease(_payees, _shares, _bounty, _bountyTokens, _bountyReceiver);
-        pizzas[pizza] = msg.sender;
-        emit PizzaCreated(pizza);
+        emit PizzaCreated(pizza, msg.sender);
     }
 
+    /**
+     * @dev Predicts the address of the pizza contract with the given params
+     *
+     * @param _payees The addresses of the payees who will receive a share of the pizza order.
+     * @param _shares The corresponding shares of each payee.
+     * @param _bounty The bounty amount to be awarded to the successful predictor.
+     * @param _salt A random value used in case multiple contracts are created with the same params.
+     * @return The predicted address of the pizza contract.
+     */
     function predict(address[] memory _payees, uint256[] memory _shares, uint256 _bounty, uint256 _salt)
         external
         view
@@ -83,11 +111,5 @@ contract PizzaFactory {
         returns (bytes32)
     {
         return keccak256(abi.encode(_payees, _shares, _bounty, _salt));
-    }
-
-    function _initFreePizza(address _pizza, address[] memory _payees, uint256[] memory _shares) private {
-        IPizzaInitializer(_pizza).initialize(_payees, _shares, 0);
-        pizzas[_pizza] = msg.sender;
-        emit PizzaCreated(_pizza);
     }
 }

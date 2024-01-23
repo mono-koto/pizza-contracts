@@ -2,7 +2,7 @@
 pragma solidity 0.8.23;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {PizzaFactory, PizzaCreated} from "../src/PizzaFactory.sol";
+import {PizzaFactory} from "../src/PizzaFactory.sol";
 import {Pizza} from "../src/Pizza.sol";
 import {Address} from "openzeppelin-contracts/utils/Address.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
@@ -28,7 +28,7 @@ contract PizzaFactoryForkTest is Test {
     }
 
     function test_cloneReceive() public {
-        Pizza p = Pizza(payable(address(f.create(payees, shares))));
+        Pizza p = Pizza(payable(address(f.create(payees, shares, 0))));
 
         address sender = address(0x3);
         vm.deal(sender, 3 ether);
@@ -51,7 +51,7 @@ contract PizzaFactoryForkTest is Test {
     }
 
     function test_release() public {
-        Pizza p = Pizza(payable(address(f.create(payees, shares))));
+        Pizza p = Pizza(payable(address(f.create(payees, shares, 0))));
 
         address sender = address(0x3);
         vm.deal(sender, 1 ether);

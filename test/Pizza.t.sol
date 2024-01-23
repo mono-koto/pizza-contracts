@@ -2,7 +2,7 @@
 pragma solidity 0.8.23;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {PizzaFactory, PizzaCreated} from "../src/PizzaFactory.sol";
+import {PizzaFactory} from "../src/PizzaFactory.sol";
 import {Pizza} from "../src/Pizza.sol";
 import {Address} from "openzeppelin-contracts/utils/Address.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
@@ -26,7 +26,7 @@ contract PizzaTest is Test {
         payees.push(address(0x2));
         shares.push(2);
         shares.push(3);
-        pizza = Pizza(payable(address(f.create(payees, shares))));
+        pizza = Pizza(payable(address(f.create(payees, shares, 0))));
     }
 
     function test_emitPaymentReceived() public {
@@ -103,7 +103,7 @@ contract PizzaTest is Test {
         vm.deal(payable(predicted), 2e18);
 
         vm.expectRevert(abi.encodeWithSelector(Pizza.InvalidBounty.selector));
-        f.createDeterministicAndRelease(payees, shares, salt, bounty, bountyTokens, bountyReceiver);
+        f.createAndRelease(payees, shares, salt, bounty, bountyTokens, bountyReceiver);
     }
 
     function test_bountyCreate(uint256 salt) public {
@@ -125,7 +125,7 @@ contract PizzaTest is Test {
         address bountyReceiver = address(0x4);
 
         vm.prank(bountyDeployer);
-        f.createDeterministicAndRelease(payees, shares, salt, bounty, bountyTokens, bountyReceiver);
+        f.createAndRelease(payees, shares, salt, bounty, bountyTokens, bountyReceiver);
 
         assertEq(token.balanceOf(bountyDeployer), 0);
         assertEq(token.balanceOf(bountyReceiver), 1e16);
