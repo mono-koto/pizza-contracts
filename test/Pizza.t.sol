@@ -98,7 +98,6 @@ contract PizzaTest is Test {
         address[] memory bountyTokens = new address[](2);
         bountyTokens[0] = address(token);
         bountyTokens[1] = address(0);
-        address bountyDeployer = address(0x3);
         address bountyReceiver = address(0x4);
         token.transfer(address(predicted), 1e18);
         vm.deal(payable(predicted), 2e18);

@@ -15,7 +15,7 @@ import {ReentrancyGuard} from "openzeppelin-contracts/utils/ReentrancyGuard.sol"
  *      It allows for the release of ERC20 tokens as well as Ether.
  *      Releases are modified to be only callable in a batch, rather than individually.
  */
-contract Pizza is Initializable, Context, Multicall, ReentrancyGuard {
+contract Pizza is Initializable, Multicall, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /* //////////////////////////////////////////////////////////////////////// 
@@ -193,7 +193,7 @@ contract Pizza is Initializable, Context, Multicall, ReentrancyGuard {
      *      balance is increased.
      */
     receive() external payable virtual {
-        emit PaymentReceived(_msgSender(), msg.value);
+        emit PaymentReceived(msg.sender, msg.value);
     }
 
     /* //////////////////////////////////////////////////////////////////////// 
