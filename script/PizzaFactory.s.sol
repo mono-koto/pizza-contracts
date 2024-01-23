@@ -5,6 +5,10 @@ import {Script} from "forge-std/Script.sol";
 import {Pizza} from "../src/Pizza.sol";
 import {PizzaFactory} from "../src/PizzaFactory.sol";
 
+/**
+ * @title DeployPizzaFactory
+ * @dev A script contract for deploying the PizzaFactory contract.
+ */
 contract DeployPizzaFactory is Script {
     function setUp() public {}
 

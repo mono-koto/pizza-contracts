@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
-import {Initializable} from "openzeppelin-contracts/proxy/utils/Initializable.sol";
 import {SafeERC20} from "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import {Address} from "openzeppelin-contracts/utils/Address.sol";
 import {Multicall} from "openzeppelin-contracts/utils/Multicall.sol";
-import {ReentrancyGuard} from "openzeppelin-contracts/utils/ReentrancyGuard.sol";
+import {ReentrancyGuardUpgradeable} from "openzeppelin-contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 /**
  * @title Pizza
@@ -14,7 +13,7 @@ import {ReentrancyGuard} from "openzeppelin-contracts/utils/ReentrancyGuard.sol"
  *      It allows for the release of ERC20 tokens as well as Ether.
  *      Releases are modified to be only callable in a batch, rather than individually.
  */
-contract Pizza is Initializable, Multicall, ReentrancyGuard {
+contract Pizza is Multicall, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
 
     /* //////////////////////////////////////////////////////////////////////// 
@@ -165,18 +164,15 @@ contract Pizza is Initializable, Multicall, ReentrancyGuard {
         address _bountyReceiver
     ) external initializer nonReentrant {
         _init(_payees, _shares, _bounty);
-
         bounty = _bounty;
-        if (_bounty > 0 && _bountyReceiver != address(0)) {
-            for (uint256 i = 0; i < _bountyTokens.length; i++) {
-                address token = _bountyTokens[i];
-                if (token == address(0)) {
-                    _payBounty(_bountyReceiver);
-                    _release();
-                } else {
-                    _payERC20Bounty(IERC20(token), _bountyReceiver);
-                    _erc20Release(IERC20(token));
-                }
+        for (uint256 i = 0; i < _bountyTokens.length; i++) {
+            address token = _bountyTokens[i];
+            if (token == address(0)) {
+                _payBounty(_bountyReceiver);
+                _release();
+            } else {
+                _payERC20Bounty(IERC20(token), _bountyReceiver);
+                _erc20Release(IERC20(token));
             }
         }
     }
@@ -310,6 +306,7 @@ contract Pizza is Initializable, Multicall, ReentrancyGuard {
      * @param _bounty The bounty amount to be distributed among the payees.
      */
     function _init(address[] memory _payees, uint256[] memory _shares, uint256 _bounty) internal {
+        __ReentrancyGuard_init();
         if (_payees.length != _shares.length) {
             revert PayeeShareLengthMismatch();
         }
