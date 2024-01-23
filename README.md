@@ -31,5 +31,12 @@ See Foundry docs for more testing options.
 Check out the [Makefile](./Makefile) for build/deploy targets. Example:
 
 ```
+make deploy-sepolia-dryrun
 make deploy-sepolia
 ```
+
+## Private key management
+
+The private key is only used for deployment.
+
+Depending on your development needs and risk tolerance, your key can be managed any way you like. My recommended approach is to use some kind of encrypted key storage. Check out [Foundry's encrypted keystore](https://book.getfoundry.sh/reference/cast/cast-wallet-import), or use something like [1Password's `op` CLI](https://developer.1password.com/docs/cli/get-started/).

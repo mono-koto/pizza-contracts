@@ -258,7 +258,7 @@ contract Pizza is Multicall, ReentrancyGuardUpgradeable {
      * @param account The address of the payee to add.
      * @param _shares The number of shares owned by the payee.
      */
-    function _addPayee(address account, uint256 _shares) private {
+    function _addPayee(address account, uint256 _shares) internal {
         if (account == address(0)) {
             revert NullPayee(account);
         }
@@ -278,8 +278,8 @@ contract Pizza is Multicall, ReentrancyGuardUpgradeable {
      * @notice Releases the ETH bounty to the bounty receiver.
      * @param _bountyReceiver The address of the bounty receiver.
      */
-    function _payBounty(address _bountyReceiver) private {
-        uint256 bountyAmount = address(this).balance * bounty / BOUNTY_PRECISION;
+    function _payBounty(address _bountyReceiver) internal {
+        uint256 bountyAmount = (bounty * address(this).balance) / BOUNTY_PRECISION;
         if (bountyAmount > 0) {
             Address.sendValue(payable(_bountyReceiver), bountyAmount);
             emit PayBounty(_bountyReceiver, bountyAmount);
@@ -291,8 +291,8 @@ contract Pizza is Multicall, ReentrancyGuardUpgradeable {
      * @param _bountyToken The ERC20 tokens to be released.
      * @param _bountyReceiver The address of the bounty receiver.
      */
-    function _payERC20Bounty(IERC20 _bountyToken, address _bountyReceiver) private {
-        uint256 bountyAmount = _bountyToken.balanceOf(address(this)) * bounty / BOUNTY_PRECISION;
+    function _payERC20Bounty(IERC20 _bountyToken, address _bountyReceiver) internal {
+        uint256 bountyAmount = (bounty * _bountyToken.balanceOf(address(this))) / BOUNTY_PRECISION;
         if (bountyAmount > 0) {
             SafeERC20.safeTransfer(_bountyToken, payable(_bountyReceiver), bountyAmount);
             emit PayERC20Bounty(_bountyToken, _bountyReceiver, bountyAmount);
