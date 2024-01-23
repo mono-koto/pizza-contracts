@@ -3,7 +3,6 @@ pragma solidity 0.8.23;
 
 import {Clones} from "openzeppelin-contracts/proxy/Clones.sol";
 import {IPizzaInitializer} from "./IPizzaInitializer.sol";
-import {Context} from "openzeppelin-contracts/utils/Context.sol";
 
 event PizzaCreated(address indexed pizza);
 
@@ -11,7 +10,7 @@ event PizzaCreated(address indexed pizza);
  * @title PizzaFactory
  * @dev A contract for creating {IPizzaInitializer} splitter contracts.
  */
-contract PizzaFactory is Context {
+contract PizzaFactory {
     /* //////////////////////////////////////////////////////////////////////// 
                                        Storage
     //////////////////////////////////////////////////////////////////////// */
@@ -62,7 +61,7 @@ contract PizzaFactory is Context {
     ) external returns (address pizza) {
         pizza = address(Clones.cloneDeterministic(implementation, salt(_payees, _shares, _bounty, _salt)));
         IPizzaInitializer(pizza).initializeWithBountyRelease(_payees, _shares, _bounty, _bountyTokens, _bountyReceiver);
-        pizzas[pizza] = _msgSender();
+        pizzas[pizza] = msg.sender;
         emit PizzaCreated(pizza);
     }
 
@@ -88,7 +87,7 @@ contract PizzaFactory is Context {
 
     function _initFreePizza(address _pizza, address[] memory _payees, uint256[] memory _shares) private {
         IPizzaInitializer(_pizza).initialize(_payees, _shares, 0);
-        pizzas[_pizza] = _msgSender();
+        pizzas[_pizza] = msg.sender;
         emit PizzaCreated(_pizza);
     }
 }
