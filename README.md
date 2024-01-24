@@ -1,4 +1,4 @@
-# 🍕 Pizza.split Contracts
+# 🍕 PYUSD.pizza Contracts
 
 This is the smart contracts repo for pizza.split, a little protocol + [dApp](/mono-koto/pizza-ui) for splitting ETH and ERC-20s among friends.
 
