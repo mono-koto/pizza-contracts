@@ -5,6 +5,9 @@ libs = ["lib"]
 via_ir = true
 solc = "0.8.23"
 
+[profile.ci]
+verbosity = 4
+
 [profile.forked]
 fork_block_number = 18814000
 fork_url = "mainnet"
