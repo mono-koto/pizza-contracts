@@ -54,11 +54,7 @@ contract SimpleSplitter is ISimpleSplitter, ReentrancyGuard {
      * @param _recipients The addresses of the recipients.
      * @param _shares The corresponding shares of each recipient.
      */
-    constructor(
-        IERC20 _token,
-        address[] memory _recipients,
-        uint256[] memory _shares
-    ) {
+    constructor(IERC20 _token, address[] memory _recipients, uint256[] memory _shares) {
         if (address(_token) == address(0)) {
             revert ZeroAddressRecipient();
         }
@@ -117,7 +113,7 @@ contract SimpleSplitter is ISimpleSplitter, ReentrancyGuard {
         for (uint256 i = 0; i < recipients.length; i++) {
             address recipient = recipients[i];
             uint256 amount = (balance * shares[i]) / totalShares;
-            
+
             if (amount > 0) {
                 distributed += amount;
                 token.safeTransfer(recipient, amount);
@@ -157,7 +153,7 @@ contract SimpleSplitter is ISimpleSplitter, ReentrancyGuard {
         if (recipientIndex >= recipients.length) {
             return 0;
         }
-        
+
         uint256 balance = token.balanceOf(address(this));
         return (balance * shares[recipientIndex]) / totalShares;
     }

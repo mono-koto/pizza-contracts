@@ -11,7 +11,7 @@ import {ERC20} from "openzeppelin-contracts/token/ERC20/ERC20.sol";
  */
 contract MockToken is ERC20 {
     uint8 private constant DECIMALS = 6;
-    uint256 private constant INITIAL_SUPPLY = 1_000_000 * 10**DECIMALS; // 1M tokens
+    uint256 private constant INITIAL_SUPPLY = 1_000_000 * 10 ** DECIMALS; // 1M tokens
 
     /**
      * @notice Deploys the MockToken with initial supply to deployer
