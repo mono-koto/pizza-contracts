@@ -105,10 +105,9 @@ contract SimpleSplitter is ISimpleSplitter, ReentrancyGuard {
 
         uint256 distributed = 0;
         for (uint256 i = 0; i < recipients.length; i++) {
-            address recipient = recipients[i];
             uint256 amount = (balance * shares[i]) / totalShares;
-
             if (amount > 0) {
+                address recipient = recipients[i];
                 distributed += amount;
                 token.safeTransfer(recipient, amount);
                 emit RecipientPaid(recipient, amount);
