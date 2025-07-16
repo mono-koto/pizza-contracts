@@ -51,11 +51,11 @@ deploy-mock-token name symbol:
 deploy-splitter token_address recipients shares:
     forge create src/SimpleSplitter.sol:SimpleSplitter \
         --broadcast \
+        --verify \
+        --verifier etherscan \
         --rpc-url arbitrum_sepolia \
         --private-key "$PRIVATE_KEY" \
-        --constructor-args "{{token_address}}" "[{{recipients}}]" "[{{shares}}]" \
-        --verify \
-        --etherscan-api-key "$ARBISCAN_API_KEY"
+        --constructor-args "{{token_address}}" "[{{recipients}}]" "[{{shares}}]"
 
 # Generate a new wallet for deployment
 generate-wallet:
