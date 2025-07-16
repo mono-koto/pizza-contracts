@@ -128,21 +128,15 @@ contract SimpleSplitterForkTest is Test {
     }
 
     function test_fork_distribute_withRemainder() public {
-        uint256 amount = 1003; // Amount that creates remainder
+        uint256 amount = 103; // Amount that creates remainder
 
         deal(PYUSD_ADDRESS, address(splitter), amount);
 
         splitter.distribute();
 
-        // With shares 40, 35, 25 and total 100:
-        // alice gets 1003 * 40 / 100 = 401 (integer division)
-        // bob gets 1003 * 35 / 100 = 351
-        // charlie gets 1003 * 25 / 100 = 250
-        // Total distributed: 401 + 351 + 250 = 1002
-        // Remainder: 1003 - 1002 = 1
-        assertEq(pyusd.balanceOf(alice), 401);
-        assertEq(pyusd.balanceOf(bob), 351);
-        assertEq(pyusd.balanceOf(charlie), 250);
+        assertEq(pyusd.balanceOf(alice), 41);
+        assertEq(pyusd.balanceOf(bob), 36);
+        assertEq(pyusd.balanceOf(charlie), 25);
         assertEq(pyusd.balanceOf(address(splitter)), 1); // Remainder
     }
 

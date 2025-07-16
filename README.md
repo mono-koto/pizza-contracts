@@ -1,6 +1,6 @@
 # SimpleSplitter - PYUSD Token Splitter for Arbitrum
 
-A simplified smart contract for splitting ERC20 tokens (specifically designed for PYUSD) among multiple recipients based on predefined shares. This project demonstrates smart contract development practices and provides a clean educational example for PYUSD integration on Arbitrum.
+A simplified smart contract for splitting ERC20 tokens (like PYUSD) among multiple recipients based on predefined shares. This project demonstrates smart contract development practices and provides a clean educational example for PYUSD integration on Arbitrum.
 
 ## What Does SimpleSplitter Do? 🤔
 

@@ -8,7 +8,7 @@ import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
  * @notice Interface for the SimpleSplitter contract
  * @dev This interface allows other contracts to interact with SimpleSplitter
  *      without importing the full implementation, reducing contract size
- * @author Mono Koto (mono-koto.eth)
+ * @author Mono Koto (mono-koto.eth / https://mono-koto.com)
  */
 interface ISimpleSplitter {
     /* //////////////////////////////////////////////////////////////////////// 
@@ -41,11 +41,6 @@ interface ISimpleSplitter {
      * @dev Error thrown when an account has zero shares.
      */
     error RecipientHasZeroShares(address recipient);
-
-    /**
-     * @dev Error thrown for duplicate recipient addresses.
-     */
-    error DuplicateRecipient(address recipient);
 
     /**
      * @dev Error thrown when a recipient address is zero.

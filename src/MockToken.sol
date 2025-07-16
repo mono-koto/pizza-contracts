@@ -7,16 +7,16 @@ import {ERC20} from "openzeppelin-contracts/token/ERC20/ERC20.sol";
  * @title MockToken
  * @notice A simple ERC20 token with 6 decimals that mimics PYUSD characteristics
  * @dev This contract is for demonstration and testing purposes only
- * @author Mono Koto (mono-koto.eth)
+ * @author Mono Koto (mono-koto.eth / https://mono-koto.com)
  */
 contract MockToken is ERC20 {
-    uint8 private constant DECIMALS = 6;
-    uint256 private constant INITIAL_SUPPLY = 1_000_000 * 10 ** DECIMALS; // 1M tokens
+    uint8 private immutable DECIMALS = 6;
+    uint256 private immutable INITIAL_SUPPLY = 1_000_000 * 10 ** DECIMALS; // 1M tokens
 
     /**
      * @notice Deploys the MockToken with initial supply to deployer
      * @param name The name of the token (e.g., "Mock PYUSD")
-     * @param symbol The symbol of the token (e.g., "MPYUSD")
+     * @param symbol The symbol of the token (e.g., "MOCKPYUSD")
      */
     constructor(string memory name, string memory symbol) ERC20(name, symbol) {
         _mint(msg.sender, INITIAL_SUPPLY);

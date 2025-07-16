@@ -92,12 +92,6 @@ contract SimpleSplitterTest is Test {
         new SimpleSplitter(IERC20(token), recipients, shares);
     }
 
-    function test_constructor_revert_duplicateRecipient() public {
-        recipients[2] = alice; // Duplicate alice
-
-        vm.expectRevert(abi.encodeWithSelector(ISimpleSplitter.DuplicateRecipient.selector, alice));
-        new SimpleSplitter(IERC20(token), recipients, shares);
-    }
 
     /* //////////////////////////////////////////////////////////////////////// 
                                 Distribution Tests

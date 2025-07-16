@@ -11,7 +11,7 @@ import {ISimpleSplitter} from "./ISimpleSplitter.sol";
  * @notice A simplified token splitter contract for proportional distribution of ERC20 tokens
  * @dev This contract splits a single ERC20 token among predefined recipients based on their shares.
  *      All configuration is immutable and set at deployment time.
- * @author Mono Koto (mono-koto.eth)
+ * @author Mono Koto (mono-koto.eth / https://mono-koto.com)
  */
 contract SimpleSplitter is ISimpleSplitter, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -79,12 +79,6 @@ contract SimpleSplitter is ISimpleSplitter, ReentrancyGuard {
                 revert RecipientHasZeroShares(recipient);
             }
 
-            // Check for duplicate recipients
-            for (uint256 j = 0; j < i; j++) {
-                if (_recipients[j] == recipient) {
-                    revert DuplicateRecipient(recipient);
-                }
-            }
 
             _totalShares += share;
         }
