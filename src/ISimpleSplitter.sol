@@ -105,12 +105,6 @@ interface ISimpleSplitter {
     function recipientCount() external view returns (uint256);
 
     /**
-     * @notice Returns the current distributable balance.
-     * @return The current token balance of this contract.
-     */
-    function distributableBalance() external view returns (uint256);
-
-    /**
      * @notice Calculates how much a specific recipient would receive from the current balance.
      * @param recipientIndex The index of the recipient in the recipients array.
      * @return The amount the recipient would receive.

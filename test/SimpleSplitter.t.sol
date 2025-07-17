@@ -183,11 +183,11 @@ contract SimpleSplitterTest is Test {
     }
 
     function test_distributableBalance() public {
-        assertEq(splitter.distributableBalance(), 0);
+        assertEq(token.balanceOf(address(splitter)), 0);
 
         uint256 amount = 1000 * 10 ** 6;
         token.transfer(address(splitter), amount);
-        assertEq(splitter.distributableBalance(), amount);
+        assertEq(token.balanceOf(address(splitter)), amount);
     }
 
     function test_calculateRecipientAmount() public {

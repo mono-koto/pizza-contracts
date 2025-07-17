@@ -172,11 +172,11 @@ contract SimpleSplitterForkTest is Test {
     }
 
     function test_fork_distributableBalance() public {
-        assertEq(splitter.distributableBalance(), 0);
+        assertEq(IERC20(PYUSD_ADDRESS).balanceOf(address(splitter)), 0);
 
         uint256 amount = 1000 * 10 ** 6;
         deal(PYUSD_ADDRESS, address(splitter), amount);
-        assertEq(splitter.distributableBalance(), amount);
+        assertEq(IERC20(PYUSD_ADDRESS).balanceOf(address(splitter)), amount);
     }
 
     /* //////////////////////////////////////////////////////////////////////// 

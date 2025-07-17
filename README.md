@@ -235,7 +235,6 @@ The main contract with the following key features:
 
 **Main Functions:**
 - `distribute()`: Distributes current token balance among recipients
-- `distributableBalance()`: Returns current distributable token balance
 - `calculateRecipientAmount(index)`: Calculates amount for a specific recipient
 
 **View Functions:**
@@ -276,7 +275,7 @@ contract MyContract {
     
     function triggerDistribution() external {
         // Use the interface to interact with SimpleSplitter
-        uint256 balance = splitter.distributableBalance();
+        uint256 balance = splitter.token().balanceOf(address(splitter));
         if (balance > 0) {
             splitter.distribute();
         }

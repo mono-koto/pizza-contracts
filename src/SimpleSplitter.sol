@@ -129,13 +129,6 @@ contract SimpleSplitter is ISimpleSplitter, ReentrancyGuard {
         return recipients.length;
     }
 
-    /**
-     * @notice Returns the current distributable balance.
-     * @return The current token balance of this contract.
-     */
-    function distributableBalance() external view returns (uint256) {
-        return token.balanceOf(address(this));
-    }
 
     /**
      * @notice Calculates how much a specific recipient would receive from the current balance.
